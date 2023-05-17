@@ -1,4 +1,4 @@
-#' FUNCTION_TITLE
+#' glmPairsBoot
 #'
 #' FUNCTION_DESCRIPTION
 #'
@@ -127,7 +127,7 @@ glmPairsBoot <- function(triangle, nboot, nsim, keep) {
   return(res)
 }
 
-#' FUNCTION_TITLE
+#' glmSemiParamBoot
 #'
 #' FUNCTION_DESCRIPTION
 #'
@@ -139,9 +139,6 @@ glmPairsBoot <- function(triangle, nboot, nsim, keep) {
 #' @return RETURN_DESCRIPTION
 #' @export
 glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
-  if (round(triangle) != triangle && type == "poisson") { # can't fit poisson on non-integer data
-    stop("Poisson model requires integer data.")
-  }
   ndev <- ncol(triangle)
   colnames(triangle) <- rownames(triangle) <- 1:ndev
 
@@ -177,23 +174,8 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
     leverages <- leverages[-rm.idxs]
     resids <- resids / sqrt(1 - leverages)
     resids <- resids - mean(resids)
-  } else {
-    loga <- ppois(long.upper$value - 1, fitted, log.p = TRUE)
-    logb <- ppois(long.upper$value, fitted, log.p = TRUE)
-    loga <- mpfr(loga, 128)
-    logb <- mpfr(logb, 128)
-    a <- exp(loga)
-    b <- exp(logb)
-    u <- runif(nobs)
-    resids <- a + (b - a) * u
-    leverages <- hatvalues(model)
-    leverages <- leverages[-c(ndev, nobs)] # exclude corner points
-    resids <- resids[-c(ndev, nobs)]
-    resids.old <- resids
-    resids <- as.numeric(log(resids)) # log scale for precision
-  }
 
-  if (resids.type == "deviance") { # helper function to invert residuals
+    # define helper function to invert residuals
     devResInv <- function(mu, resid) {
       diffFunc <- function(x) {
         w <- resid**2 / (2 * mu) - 1
@@ -258,9 +240,6 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
       for (i in 1:nobs) {
         long.boot$value[i] <- devResInv(fitted[i], resids.boot[i])
       }
-    } else {
-      resids.boot <- sample(resids, nobs, replace = TRUE)
-      long.boot$value <- qpois(resids.boot, fitted, log.p = TRUE)
     }
 
     model.boot <- glm(value ~ factor(origin) + factor(dev), quasipoisson(), long.boot)
@@ -288,8 +267,6 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
           long.pred$value[i] <- devResInv(long.pred$value[i], resids.sim[i])
           long.fit$value[i] <- devResInv(long.fit$value[i], resids.sim[i])
         }
-      } else {
-        long.pred$value <- qpois(resids.sim, long.pred$value, log.p = TRUE)
       }
 
       reserve.pred <- tapply(long.pred$value, long.pred$origin, sum, na.rm = TRUE)
@@ -446,3 +423,87 @@ glmParamBoot <- function(triangle, nboot, nsim, dist) {
   return(res)
 }
 
+#' glmFit
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param triangle DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+glmFit <- function(triangle) {
+  ndev <- ncol(triangle)
+
+  long <- as.data.frame(triangle)
+  long <- transform(long, origin = factor(origin, levels = dimnames(triangle)[[1]]))
+  long <- long[order(long$origin, long$dev), ]
+
+  long.lower <- long[is.na(long$value), ]
+  long.upper <- long[!is.na(long$value), ]
+
+  model <- glm(value ~ factor(origin) + factor(dev), quasipoisson(), long.upper, maxit = 1e3)
+  a <- model$coefficients[2:ndev]
+  b <- model$coefficients[(ndev + 1):(2 * ndev - 1)]
+  intercept <- model$coefficients[1]
+  disp <- summary(model)$dispersion
+
+  long.lower$value <- predict(model, long.lower, type = "response")
+  triangle.proj <- incr2cum(as.triangle(rbind(long.upper, long.lower)))
+
+  latest <- triangle.proj[
+    row(triangle.proj) + col(triangle.proj) == ndev + 1][1:(ndev - 1)
+  ]
+  reserve <- triangle.proj[2:ndev, ndev] - rev(latest)
+
+  resids.pears <- resid(model, type = "pearson")
+  resids.dev <- sign(model$y - model$fitted.values) *
+    sqrt(zapsmall(2 * (model$y * log(model$y / model$fitted.values) + model$fitted.values - model$y)))
+
+  param.var.quasi <- summary(model)$cov.scaled # (X^T X)^-1 * \phi
+  param.var.pois <- summary(model)$cov.unscaled # (X^T X)^-1
+  model.terms <- delete.response(terms(model))
+  X <- model.matrix(model.terms, long.lower, xlev = model$xlevels)
+
+  eta.vars.pois <- list()
+  eta.vars.quasi <- list()
+  idx <- 1
+  for (i in 2:ndev) {
+    ncols <- i - 1
+    eta.vars.pois[[i - 1]] <- X[idx:(idx + ncols - 1), , drop = FALSE] %*% param.var.pois %*% t(X[idx:(idx + ncols - 1), , drop = FALSE]) # nolint
+    eta.vars.quasi[[i - 1]] <- X[idx:(idx + ncols - 1), , drop = FALSE] %*% param.var.quasi %*% t(X[idx:(idx + ncols - 1), , drop = FALSE]) # nolint
+    idx <- idx + ncols
+  }
+
+  triangle.lower <- as.triangle(long.lower)
+  pred.error.pois <- rep(0, ndev - 1)
+  pred.error.quasi <- rep(0, ndev - 1)
+  for (i in 1:(ndev - 1)) {
+    mu <- triangle.lower[i, !is.na(triangle.lower[i, ]), drop = FALSE]
+    pred.error.pois[i] <- sqrt(sum(triangle.lower[i, ], na.rm = TRUE) + mu %*% eta.vars.pois[[i]] %*% t(mu))
+    pred.error.quasi[i] <- sqrt(disp * sum(triangle.lower[i, ], na.rm = TRUE) + mu %*% eta.vars.quasi[[i]] %*% t(mu))
+  }
+
+  res <- list(
+    table = data.frame(
+      idx = 2:ndev,
+      a = a,
+      b = b,
+      reserve = reserve,
+      prederrorpois = pred.error.pois,
+      prederrorquasi = pred.error.quasi
+    ),
+    point = data.frame(
+      intercept = intercept,
+      disp = disp
+    ),
+    resids = data.frame(
+      resids.pears = resids.pears,
+      resids.dev = resids.dev
+    ),
+    fitted = model$fitted.values,
+    model = model
+  )
+
+  return(res)
+}
