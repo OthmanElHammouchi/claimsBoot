@@ -2,7 +2,7 @@
 % Please edit documentation in R/glm.r
 \name{glmPairsBoot}
 \alias{glmPairsBoot}
-\title{FUNCTION_TITLE}
+\title{glmPairsBoot}
 \usage{
 glmPairsBoot(triangle, nboot, nsim, keep)
 }

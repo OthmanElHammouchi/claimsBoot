@@ -2,7 +2,7 @@
 % Please edit documentation in R/glm.r
 \name{glmSemiParamBoot}
 \alias{glmSemiParamBoot}
-\title{FUNCTION_TITLE}
+\title{glmSemiParamBoot}
 \usage{
 glmSemiParamBoot(triangle, nboot, nsim, resids.type)
 }

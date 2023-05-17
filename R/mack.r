@@ -674,8 +674,7 @@ mackParamBoot <- function(triangle, nboot, nsim, cond, dist) {
 #' @param triangle DESCRIPTION.
 #'
 #' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @export
 mackFit <- function(triangle) {
   ndev <- ncol(triangle)
 

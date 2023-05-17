@@ -430,8 +430,7 @@ glmParamBoot <- function(triangle, nboot, nsim, dist) {
 #' @param triangle DESCRIPTION.
 #'
 #' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @export
 glmFit <- function(triangle) {
   ndev <- ncol(triangle)
 
