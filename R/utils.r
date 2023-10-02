@@ -4,7 +4,7 @@ mackConfig <- function(ndev,
                        sim.type,
                        boot.type
 ) {
-  key <- claimsBoot:::.global$key
+  key <- claimsBoot:::key
   if (boot.type != "pairs") {
     conds <- c(TRUE, FALSE)
     if (boot.type == "residuals") {
@@ -226,7 +226,7 @@ glmConfig <- function(ndev,
                       factors,
                       sim.type,
                       boot.type) {
-  key <- claimsBoot:::.global$key
+  key <- claimsBoot:::key
   if (boot.type == "parametric") {
     opt <- as.double(key[c("normal", "gamma", "poisson")])
   }

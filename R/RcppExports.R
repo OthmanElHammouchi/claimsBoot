@@ -17,6 +17,9 @@ NULL
 #' Simulate Poisson GLM reserve.
 #'
 #' @param triangle Incremental claims triangle
+#' @param n_boot Number of bootstrap iterations.
+#' @param opt
+#' @param seed
 #' @export
 glmBoot <- function(triangle, n_boot, boot_type, opt = "null", seed = 42L) {
     .Call('_claimsBoot_glmBoot', PACKAGE = 'claimsBoot', triangle, n_boot, boot_type, opt, seed)

@@ -8,6 +8,8 @@ glmBoot(triangle, n_boot, boot_type, opt = "null", seed = 42L)
 }
 \arguments{
 \item{triangle}{Incremental claims triangle}
+
+\item{n_boot}{Number of bootstrap iterations.}
 }
 \description{
 Simulate Poisson GLM reserve.

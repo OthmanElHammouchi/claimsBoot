@@ -7,11 +7,16 @@
 glmFit(triangle)
 }
 \arguments{
-\item{triangle}{DESCRIPTION.}
+\item{triangle}{Incremental claims triangle.}
 }
 \value{
-RETURN_DESCRIPTION
+A list with the following components:
+* A dataframe `table` containing the estimates for the a and b parameters as well as
+  the reserve by origin year. Estimates of the prediction error by origin year are provided
+  as well.
+* A dataframe `point` containing point estimates for the intercept and dispersion.
+* A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 }
 \description{
-FUNCTION_DESCRIPTION
+Fit the Poisson GLM reserving model.
 }

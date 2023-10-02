@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/othman/mambaforge/envs/data_science/lib/R/include/"
+                "/home/othman/mambaforge/envs/data_science/lib/R/include/",
+                "/home/othman/mambaforge/envs/data_science/lib/R/library/Rcpp/include/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

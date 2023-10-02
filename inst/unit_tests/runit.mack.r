@@ -23,7 +23,7 @@ test.mackBoot <- function() {
       resids.type
     )
   }
-
+  
   checkTrue(!any(is.na(reserve)))
 }
 

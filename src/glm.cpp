@@ -17,6 +17,9 @@ int validate_rng_(int n_samples);
 //' Simulate Poisson GLM reserve.
 //'
 //' @param triangle Incremental claims triangle
+//' @param n_boot Number of bootstrap iterations.
+//' @param opt
+//' @param seed
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericVector glmBoot(Rcpp::NumericMatrix triangle, int n_boot,

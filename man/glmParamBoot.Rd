@@ -2,22 +2,27 @@
 % Please edit documentation in R/glm.r
 \name{glmParamBoot}
 \alias{glmParamBoot}
-\title{FUNCTION_TITLE}
+\title{glmParamBoot}
 \usage{
 glmParamBoot(triangle, nboot, nsim, dist)
 }
 \arguments{
-\item{triangle}{DESCRIPTION.}
+\item{triangle}{Incremental claims triangle.}
 
-\item{nboot}{DESCRIPTION.}
+\item{nboot}{Number of bootstrap iterations.}
 
-\item{nsim}{DESCRIPTION.}
+\item{nsim}{Number of simulation iterations.}
 
-\item{dist}{DESCRIPTION.}
+\item{dist}{The distribution to use: `"normal"`, `"gamma"` or `"poisson"`.}
 }
 \value{
-RETURN_DESCRIPTION
+A list with the following components:
+* A dataframe `table` containing the estimates for the a and b parameters as well as
+  the reserve by origin year. Estimates of the prediction error by origin year are provided
+  as well.
+* A dataframe `point` containing point estimates for the intercept and dispersion.
+* A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 }
 \description{
-FUNCTION_DESCRIPTION
+Perform a parametric bootstrap for the GLM reserving model.
 }

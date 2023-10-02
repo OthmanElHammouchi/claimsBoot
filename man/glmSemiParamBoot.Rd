@@ -7,17 +7,22 @@
 glmSemiParamBoot(triangle, nboot, nsim, resids.type)
 }
 \arguments{
-\item{triangle}{DESCRIPTION.}
+\item{triangle}{Incremental claims triangle.}
 
-\item{nboot}{DESCRIPTION.}
+\item{nboot}{Number of bootstrap iterations.}
 
-\item{nsim}{DESCRIPTION.}
+\item{nsim}{Number of simulation iterations.}
 
-\item{resids.type}{DESCRIPTION.}
+\item{resids.type}{The type of residuals to use: `"pearson"` or `"deviance"`.}
 }
 \value{
-RETURN_DESCRIPTION
+A list with the following components:
+* A dataframe `table` containing the estimates for the a and b parameters as well as
+  the reserve by origin year. Estimates of the prediction error by origin year are provided
+  as well.
+* A dataframe `point` containing point estimates for the intercept and dispersion.
+* A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 }
 \description{
-FUNCTION_DESCRIPTION
+Perform a semiparametric bootstrap for the GLM reserving model.
 }

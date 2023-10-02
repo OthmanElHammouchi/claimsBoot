@@ -1,13 +1,18 @@
 #' glmPairsBoot
 #'
-#' FUNCTION_DESCRIPTION
+#' Perform a pairs bootstrap for the GLM reserving model.
 #'
 #' @param triangle Incremental claims triangle.
-#' @param nboot DESCRIPTION.
-#' @param nsim DESCRIPTION.
+#' @param nboot Number of bootstrap iterations.
+#' @param nsim Number of simulation iterations.
 #' @param keep DESCRIPTION.
 #'
-#' @return RETURN_DESCRIPTION
+#' @return A list with the following components:
+#' * A dataframe `table` containing the estimates for the a and b parameters as well as
+#'   the reserve by origin year. Estimates of the prediction error by origin year are provided
+#'   as well.
+#' * A dataframe `point` containing point estimates for the intercept and dispersion.
+#' * A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 #' @export
 glmPairsBoot <- function(triangle, nboot, nsim, keep) {
   ndev <- ncol(triangle)
@@ -32,6 +37,7 @@ glmPairsBoot <- function(triangle, nboot, nsim, keep) {
   long.lower$value <- predict(model, long.lower, type = "response")
   disp <- summary(model)$dispersion
 
+  # Define helper function to combine results of parallel for loop.
   combine <- function(list1, list2) {
     res <- list()
     res$a <- rbind(list1$a, list2$a)
@@ -52,18 +58,21 @@ glmPairsBoot <- function(triangle, nboot, nsim, keep) {
     iboot = 1:nboot,
     .combine = combine,
     .packages = "ChainLadder",
-    .options.snow = opts) %dopar% {
+    .options.snow = opts
+  ) %dopar% {
     deficient <- TRUE
     while (deficient) {
       if (keep == "randomised") {
         long.keep <- data.frame(origin = numeric(), dev = numeric(), value = numeric())
         for (j in 1:ndev) {
-          long.keep <- rbind(long.keep,
+          long.keep <- rbind(
+            long.keep,
             long.upper[long.upper$dev == j & long.upper$origin == sample(1:(ndev + 1 - j), 1), ]
           )
         }
         for (i in 1:ndev) {
-          long.keep <- rbind(long.keep,
+          long.keep <- rbind(
+            long.keep,
             long.upper[long.upper$origin == i & long.upper$dev == sample(1:(ndev + 1 - i), 1), ]
           )
         }
@@ -129,14 +138,19 @@ glmPairsBoot <- function(triangle, nboot, nsim, keep) {
 
 #' glmSemiParamBoot
 #'
-#' FUNCTION_DESCRIPTION
+#' Perform a semiparametric bootstrap for the GLM reserving model.
 #'
-#' @param triangle DESCRIPTION.
-#' @param nboot DESCRIPTION.
-#' @param nsim DESCRIPTION.
-#' @param resids.type DESCRIPTION.
+#' @param triangle Incremental claims triangle.
+#' @param nboot Number of bootstrap iterations.
+#' @param nsim Number of simulation iterations.
+#' @param resids.type The type of residuals to use: `"pearson"` or `"deviance"`.
 #'
-#' @return RETURN_DESCRIPTION
+#' @return A list with the following components:
+#' * A dataframe `table` containing the estimates for the a and b parameters as well as
+#'   the reserve by origin year. Estimates of the prediction error by origin year are provided
+#'   as well.
+#' * A dataframe `point` containing point estimates for the intercept and dispersion.
+#' * A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 #' @export
 glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
   ndev <- ncol(triangle)
@@ -183,7 +197,9 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
         return(res)
       }
 
-      dFun <- function(x) { log(x) }
+      dFun <- function(x) {
+        log(x)
+      }
 
       if (resid < 0) {
         lb <- 0
@@ -226,7 +242,8 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
   res.list <- foreach(
     iboot = 1:nboot,
     .combine = combine,
-    .options.snow = opts) %dopar% {
+    .options.snow = opts
+  ) %dopar% {
     long.boot <- long.upper
     if (resids.type == "pearson") {
       negative <- TRUE
@@ -305,16 +322,21 @@ glmSemiParamBoot <- function(triangle, nboot, nsim, resids.type) {
   return(res)
 }
 
-#' FUNCTION_TITLE
+#' glmParamBoot
 #'
-#' FUNCTION_DESCRIPTION
+#' Perform a parametric bootstrap for the GLM reserving model.
 #'
-#' @param triangle DESCRIPTION.
-#' @param nboot DESCRIPTION.
-#' @param nsim DESCRIPTION.
-#' @param dist DESCRIPTION.
+#' @param triangle Incremental claims triangle.
+#' @param nboot Number of bootstrap iterations.
+#' @param nsim Number of simulation iterations.
+#' @param dist The distribution to use: `"normal"`, `"gamma"` or `"poisson"`.
 #'
-#' @return RETURN_DESCRIPTION
+#' @return A list with the following components:
+#' * A dataframe `table` containing the estimates for the a and b parameters as well as
+#'   the reserve by origin year. Estimates of the prediction error by origin year are provided
+#'   as well.
+#' * A dataframe `point` containing point estimates for the intercept and dispersion.
+#' * A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 #' @export
 glmParamBoot <- function(triangle, nboot, nsim, dist) {
   ndev <- ncol(triangle)
@@ -353,7 +375,8 @@ glmParamBoot <- function(triangle, nboot, nsim, dist) {
     iboot = 1:nboot,
     .combine = combine,
     .packages = "ChainLadder",
-    .options.snow = opts) %dopar% {
+    .options.snow = opts
+  ) %dopar% {
     long.boot <- long.upper
 
     negative <- TRUE
@@ -425,11 +448,16 @@ glmParamBoot <- function(triangle, nboot, nsim, dist) {
 
 #' glmFit
 #'
-#' FUNCTION_DESCRIPTION
+#' Fit the Poisson GLM reserving model.
 #'
-#' @param triangle DESCRIPTION.
+#' @param triangle Incremental claims triangle.
 #'
-#' @return RETURN_DESCRIPTION
+#' @return A list with the following components:
+#' * A dataframe `table` containing the estimates for the a and b parameters as well as
+#'   the reserve by origin year. Estimates of the prediction error by origin year are provided
+#'   as well.
+#' * A dataframe `point` containing point estimates for the intercept and dispersion.
+#' * A vector `pred.dist` containing the simulated predictive distribution of the reserve.
 #' @export
 glmFit <- function(triangle) {
   ndev <- ncol(triangle)
@@ -451,8 +479,8 @@ glmFit <- function(triangle) {
   triangle.proj <- incr2cum(as.triangle(rbind(long.upper, long.lower)))
 
   latest <- triangle.proj[
-    row(triangle.proj) + col(triangle.proj) == ndev + 1][1:(ndev - 1)
-  ]
+    row(triangle.proj) + col(triangle.proj) == ndev + 1
+  ][1:(ndev - 1)]
   reserve <- triangle.proj[2:ndev, ndev] - rev(latest)
 
   resids.pears <- resid(model, type = "pearson")
